@@ -41,6 +41,9 @@
 ### 현재 코드 기준 추가 진행 결과
 
 - `lib_checkout`는 `book`, `member`, `loan` 기능과 서버 렌더링 UI, Flyway 기반 스키마, `H2`/`PostgreSQL` 프로필 분리를 포함하는 구조로 재구성되었다.
+- 메인 서비스에는 `db/seed/demo-data-postgres.sql` 기반의 dummy data 시드가 추가되었고, `docker-pg` 실행 시 DB가 비어 있을 때만 자동 주입되도록 정리되었다.
+- Home 화면은 전체 책 목록, 대출 현황, 회원별 대출 통계를 함께 보여주는 대시보드 형태로 확장되었다.
+- Members 화면은 회원 상태와 회원별 대출 통계를 함께 보여주는 요약 카드형 화면으로 확장되었다.
 - 루트 `docker-compose.yml`은 `library-service`, `postgres`, `service-monitor` 3개 서비스를 기준으로 실제 실행 구성을 갖추도록 채워졌다.
 - `service_monitor/`는 별도 Spring Boot 애플리케이션으로 추가되었고 Dashboard, health summary API, incident 이력, reliability metrics 기본 골격을 포함한다.
 - Docker logs 수집과 Failure Injection 실제 제어 기능은 다음 구현 단계로 남겨둔다.

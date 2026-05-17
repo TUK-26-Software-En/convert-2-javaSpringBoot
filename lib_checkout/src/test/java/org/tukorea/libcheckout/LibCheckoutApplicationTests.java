@@ -38,7 +38,18 @@ class LibCheckoutApplicationTests {
     void homePageLoads() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Library Checkout Service")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Library Checkout Service")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("전체 책 목록")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("대출 현황")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("유저 별 대출 통계")));
+    }
+
+    @Test
+    void memberPageLoadsDashboard() throws Exception {
+        mockMvc.perform(get("/members"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("회원 대출 현황")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("현재 대출 회원")));
     }
 
     @Test
@@ -71,6 +82,16 @@ class LibCheckoutApplicationTests {
                         .param("dueDate", "2099-12-31"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/loans"));
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("테스트 도서")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("홍길동")));
+
+        mockMvc.perform(get("/members"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("홍길동")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("hong@example.com")));
 
         assertThat(bookRepository.findById(bookId)).isPresent();
         assertThat(bookRepository.findById(bookId).orElseThrow().getAvailableQuantity()).isEqualTo(2);

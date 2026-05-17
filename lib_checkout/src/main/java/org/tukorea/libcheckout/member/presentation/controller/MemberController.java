@@ -25,7 +25,7 @@ public class MemberController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("members", memberService.findAllMembers());
+        model.addAttribute("dashboard", memberService.loadDashboard());
         return "member/list";
     }
 

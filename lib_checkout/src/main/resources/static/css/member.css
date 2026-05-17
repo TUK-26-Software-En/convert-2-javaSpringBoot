@@ -1,8 +1,16 @@
-.page-body .panel {
+.panel {
     border-top: 6px solid #0f766e;
 }
 
 .status-badge {
     background: #ccfbf1;
     color: #115e59;
+}
+
+.member-toolbar-row {
+    display: block;
+}
+
+.member-toolbar {
+    margin-bottom: 0;
 }

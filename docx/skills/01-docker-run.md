@@ -22,3 +22,8 @@
 - healthcheck 통과 여부
 - 네트워크 연결 여부
 - Dashboard 접속 여부
+
+## 초기 데이터 원칙
+
+- `library-service`는 `docker-pg` 프로필로 실행될 때 `books`, `members`, `loans`가 모두 비어 있으면 `db/seed/demo-data-postgres.sql`을 실행한다.
+- 이미 데이터가 존재하면 dummy data는 다시 넣지 않는다.

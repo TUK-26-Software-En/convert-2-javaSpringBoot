@@ -14,6 +14,7 @@
     <div>
         <p class="eyebrow">Member Management</p>
         <h1>회원 관리</h1>
+        <p class="subtitle">회원 상태와 대출 부담을 함께 확인하는 Members 대시보드</p>
     </div>
     <nav class="main-nav">
         <a th:href="@{/}">Home</a>
@@ -23,37 +24,92 @@
     </nav>
 </header>
 
-<main class="page-body">
-    <div class="toolbar">
-        <a class="button primary-button" th:href="@{/members/new}">회원 등록</a>
-    </div>
+<main class="content-grid">
+    <section class="content-span member-toolbar-row">
+        <div class="toolbar member-toolbar">
+            <a class="button primary-button" th:href="@{/members/new}">회원 등록</a>
+        </div>
+    </section>
 
-    <p class="flash-message" th:if="${message}" th:text="${message}"></p>
+    <p class="flash-message content-span" th:if="${message}" th:text="${message}"></p>
 
-    <section class="panel">
-        <table class="data-table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>이름</th>
-                <th>이메일</th>
-                <th>전화번호</th>
-                <th>상태</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:if="${#lists.isEmpty(members)}">
-                <td colspan="5">등록된 회원이 없습니다.</td>
-            </tr>
-            <tr th:each="member : ${members}">
-                <td th:text="${member.id}">1</td>
-                <td th:text="${member.name}">이름</td>
-                <td th:text="${member.email}">email@example.com</td>
-                <td th:text="${member.phoneNumber}">010-0000-0000</td>
-                <td><span class="status-badge" th:text="${member.status}">ACTIVE</span></td>
-            </tr>
-            </tbody>
-        </table>
+    <section class="panel summary-card">
+        <h2>전체 회원</h2>
+        <p class="metric" th:text="${dashboard.totalMemberCount}">0</p>
+    </section>
+    <section class="panel summary-card">
+        <h2>활성 회원</h2>
+        <p class="metric" th:text="${dashboard.activeMemberCount}">0</p>
+    </section>
+    <section class="panel summary-card">
+        <h2>비활성 회원</h2>
+        <p class="metric" th:text="${dashboard.inactiveMemberCount}">0</p>
+    </section>
+    <section class="panel summary-card accent-card">
+        <h2>현재 대출 회원</h2>
+        <p class="metric" th:text="${dashboard.borrowingMemberCount}">0</p>
+    </section>
+    <section class="panel summary-card warning-card">
+        <h2>연체 주의 회원</h2>
+        <p class="metric" th:text="${dashboard.overdueMemberCount}">0</p>
+    </section>
+
+    <section class="panel content-span">
+        <div class="panel-header-block">
+            <div>
+                <p class="eyebrow section-eyebrow">Members Dashboard</p>
+                <h2>회원 대출 현황</h2>
+                <p class="panel-caption">회원 기본 정보와 함께 총 대출, 활성 대출, 반납 완료, 연체 건수, 최근 대출 이력을 한 번에 확인한다.</p>
+            </div>
+        </div>
+
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>이름</th>
+                    <th>상태</th>
+                    <th>이메일</th>
+                    <th>전화번호</th>
+                    <th>총 대출</th>
+                    <th>활성 대출</th>
+                    <th>반납 완료</th>
+                    <th>연체 건수</th>
+                    <th>최근 대출 도서</th>
+                    <th>최근 대출일</th>
+                    <th>가장 빠른 반납 예정일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(dashboard.members)}">
+                    <td colspan="12">등록된 회원이 없습니다.</td>
+                </tr>
+                <tr th:each="member : ${dashboard.members}">
+                    <td th:text="${member.id}">1</td>
+                    <td th:text="${member.name}">홍길동</td>
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${member.status.name() == 'ACTIVE' ? ' is-success' : ' is-muted'}"
+                              th:text="${member.status}">ACTIVE</span>
+                    </td>
+                    <td th:text="${member.email}">hong@example.com</td>
+                    <td th:text="${member.phoneNumber}">010-0000-0000</td>
+                    <td th:text="${member.totalLoans}">0</td>
+                    <td th:text="${member.activeLoans}">0</td>
+                    <td th:text="${member.returnedLoans}">0</td>
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${member.overdueLoans > 0 ? ' is-danger' : ' is-neutral'}"
+                              th:text="${member.overdueLoans}">0</span>
+                    </td>
+                    <td th:text="${member.latestBookTitle}">-</td>
+                    <td th:text="${member.latestLoanedAt == null ? '-' : member.latestLoanedAt}">-</td>
+                    <td th:text="${member.nearestDueDate == null ? '-' : member.nearestDueDate}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </section>
 </main>
 </body>

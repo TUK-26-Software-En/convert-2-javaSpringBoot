@@ -103,6 +103,11 @@ a {
     color: #eff6ff;
 }
 
+.warning-card {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff7ed;
+}
+
 .metric {
     margin: 1rem 0 0;
     font-size: 3rem;
@@ -159,6 +164,61 @@ button {
     color: #64748b;
 }
 
+.table-scroll {
+    overflow-x: auto;
+}
+
+.panel-header-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.section-eyebrow {
+    color: #64748b;
+}
+
+.panel-caption {
+    margin: 0.5rem 0 0;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.mini-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.mini-summary-card {
+    padding: 1rem 1.1rem;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #dbe4ee;
+}
+
+.mini-summary-label {
+    display: block;
+    color: #64748b;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.mini-summary-card strong {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 1.8rem;
+}
+
+.overdue-card {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -168,6 +228,31 @@ button {
     color: #1d4ed8;
     font-size: 0.8rem;
     font-weight: 700;
+}
+
+.status-badge.is-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.is-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.is-muted {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.status-badge.is-neutral {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.empty-state {
+    margin: 0;
+    color: #64748b;
 }
 
 .flash-message {

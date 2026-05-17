@@ -12,7 +12,7 @@
     <div>
         <p class="eyebrow">Software Engineering Practice</p>
         <h1>Library Checkout Service</h1>
-        <p class="subtitle">3-Layer Architecture와 MVC를 기준으로 구성하는 도서 대출 서비스</p>
+        <p class="subtitle">HOME 탭에서 도서 목록, 대출 상태, 회원별 대출 통계를 함께 확인하는 도서 대출 서비스</p>
     </div>
     <nav class="main-nav">
         <a th:href="@{/}">Home</a>
@@ -24,25 +24,167 @@
 
 <main class="content-grid">
     <section class="panel summary-card">
-        <h2>도서 현황</h2>
+        <h2>전체 도서</h2>
         <p class="metric" th:text="${summary.bookCount}">0</p>
     </section>
     <section class="panel summary-card">
-        <h2>회원 현황</h2>
+        <h2>전체 회원</h2>
         <p class="metric" th:text="${summary.memberCount}">0</p>
     </section>
     <section class="panel summary-card">
-        <h2>대출 이력</h2>
+        <h2>전체 대출 이력</h2>
         <p class="metric" th:text="${summary.loanCount}">0</p>
     </section>
     <section class="panel summary-card accent-card">
         <h2>활성 대출</h2>
         <p class="metric" th:text="${summary.activeLoanCount}">0</p>
     </section>
+    <section class="panel summary-card">
+        <h2>반납 완료</h2>
+        <p class="metric" th:text="${summary.returnedLoanCount}">0</p>
+    </section>
+    <section class="panel summary-card warning-card">
+        <h2>연체 중</h2>
+        <p class="metric" th:text="${summary.overdueLoanCount}">0</p>
+    </section>
+
     <section class="panel content-span">
-        <h2>현재 Build 단계</h2>
-        <p>메인 서비스는 Spring Boot 3.x, Java 21, H2/PostgreSQL 프로필 분리, 기능별 3-Layer 구조로 재구성되었다.</p>
-        <p>이제 Docker Compose와 별도 모니터링 컨테이너가 연결되며, 다음 단계는 Docker 제어 allowlist와 로그 수집 기능 고도화다.</p>
+        <div class="panel-header-block">
+            <div>
+                <p class="eyebrow section-eyebrow">Home Tab</p>
+                <h2>전체 책 목록</h2>
+                <p class="panel-caption">등록된 모든 책의 재고, ISBN, 대출 가능 상태를 한 번에 확인한다.</p>
+            </div>
+        </div>
+
+        <p class="empty-state" th:if="${#lists.isEmpty(summary.books)}">등록된 도서가 없습니다.</p>
+        <div class="table-scroll" th:unless="${#lists.isEmpty(summary.books)}">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>제목</th>
+                    <th>저자</th>
+                    <th>ISBN</th>
+                    <th>재고</th>
+                    <th>상태</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="book : ${summary.books}">
+                    <td th:text="${book.id}">1</td>
+                    <td th:text="${book.title}">도서명</td>
+                    <td th:text="${book.author}">저자</td>
+                    <td th:text="${book.isbn}">9780000000000</td>
+                    <td th:text="${book.availableQuantity + ' / ' + book.totalQuantity}">0 / 0</td>
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${book.availableQuantity > 0 ? ' is-success' : ' is-muted'}"
+                              th:text="${book.status}">AVAILABLE</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel content-span">
+        <div class="panel-header-block">
+            <div>
+                <p class="eyebrow section-eyebrow">Home Tab</p>
+                <h2>대출 현황</h2>
+                <p class="panel-caption">활성, 반납 완료, 연체 상태를 요약하고 개별 대출 행을 상세하게 보여준다.</p>
+            </div>
+        </div>
+
+        <div class="mini-summary-grid">
+            <article class="mini-summary-card">
+                <span class="mini-summary-label">활성 대출</span>
+                <strong th:text="${summary.activeLoanCount}">0</strong>
+            </article>
+            <article class="mini-summary-card">
+                <span class="mini-summary-label">반납 완료</span>
+                <strong th:text="${summary.returnedLoanCount}">0</strong>
+            </article>
+            <article class="mini-summary-card overdue-card">
+                <span class="mini-summary-label">연체 중</span>
+                <strong th:text="${summary.overdueLoanCount}">0</strong>
+            </article>
+        </div>
+
+        <p class="empty-state" th:if="${#lists.isEmpty(summary.loans)}">등록된 대출 이력이 없습니다.</p>
+        <div class="table-scroll" th:unless="${#lists.isEmpty(summary.loans)}">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>대출 ID</th>
+                    <th>도서</th>
+                    <th>회원</th>
+                    <th>대출일</th>
+                    <th>반납 예정일</th>
+                    <th>반납일</th>
+                    <th>상태</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="loan : ${summary.loans}">
+                    <td th:text="${loan.id}">1</td>
+                    <td th:text="${loan.bookTitle}">도서명</td>
+                    <td th:text="${loan.memberName}">회원명</td>
+                    <td th:text="${loan.loanedAt}">2026-01-01T10:00</td>
+                    <td th:text="${loan.dueDate}">2026-01-10</td>
+                    <td th:text="${loan.returnedAt == null ? '-' : loan.returnedAt}">-</td>
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${loan.overdue ? ' is-danger' : (loan.status.name() == 'RETURNED' ? ' is-muted' : ' is-success')}"
+                              th:text="${loan.overdue ? 'OVERDUE' : loan.status}">ACTIVE</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel content-span">
+        <div class="panel-header-block">
+            <div>
+                <p class="eyebrow section-eyebrow">Home Tab</p>
+                <h2>유저 별 대출 통계</h2>
+                <p class="panel-caption">회원 단위로 전체 대출 수, 현재 활성 대출, 반납 완료, 연체 건수를 비교한다.</p>
+            </div>
+        </div>
+
+        <p class="empty-state" th:if="${#lists.isEmpty(summary.memberLoanStats)}">등록된 회원이 없습니다.</p>
+        <div class="table-scroll" th:unless="${#lists.isEmpty(summary.memberLoanStats)}">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>회원 ID</th>
+                    <th>회원명</th>
+                    <th>이메일</th>
+                    <th>전체 대출</th>
+                    <th>활성 대출</th>
+                    <th>반납 완료</th>
+                    <th>연체 중</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stat : ${summary.memberLoanStats}">
+                    <td th:text="${stat.memberId}">1</td>
+                    <td th:text="${stat.memberName}">홍길동</td>
+                    <td th:text="${stat.email}">hong@example.com</td>
+                    <td th:text="${stat.totalLoans}">0</td>
+                    <td th:text="${stat.activeLoans}">0</td>
+                    <td th:text="${stat.returnedLoans}">0</td>
+                    <td>
+                        <span class="status-badge"
+                              th:classappend="${stat.overdueLoans > 0 ? ' is-danger' : ' is-neutral'}"
+                              th:text="${stat.overdueLoans}">0</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </section>
 </main>
 </body>
