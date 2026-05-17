@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: service-monitor
+  profiles:
+    default: monitor-local
+  thymeleaf:
+    cache: false
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: ${SERVER_PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+monitoring:
+  collection:
+    enabled: ${MONITORING_COLLECTION_ENABLED:true}
+    fixed-delay: ${MONITORING_COLLECTION_FIXED_DELAY:30000}
+  targets:
+    library-service-health-url: ${LIBRARY_SERVICE_HEALTH_URL:http://localhost:8080/actuator/health}
+    postgres-jdbc-url: ${POSTGRES_JDBC_URL:jdbc:postgresql://localhost:5432/lib_checkout}
+    postgres-username: ${POSTGRES_USERNAME:lib_checkout}
+    postgres-password: ${POSTGRES_PASSWORD:lib_checkout}
+  docker-control:
+    enabled: ${DOCKER_CONTROL_ENABLED:false}
+    socket-path: ${DOCKER_SOCKET_PATH:/var/run/docker.sock}
+    allowed-targets: ${DOCKER_ALLOWED_TARGETS:library-service,postgres}
+    allowed-commands: ${DOCKER_ALLOWED_COMMANDS:inspect,logs,stats,pause,unpause,start,stop,restart}
+  failure-injection:
+    enabled: ${FAULT_INJECTION_ENABLED:false}

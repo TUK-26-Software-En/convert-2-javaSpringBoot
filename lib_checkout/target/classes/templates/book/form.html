@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Book</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/book.css}">
+    <script defer th:src="@{/js/main.js}"></script>
+    <script defer th:src="@{/js/book.js}"></script>
+</head>
+<body data-page="books">
+<header class="page-header compact-header">
+    <div>
+        <p class="eyebrow">Book Management</p>
+        <h1>도서 등록</h1>
+    </div>
+    <nav class="main-nav">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/books}">Books</a>
+        <a th:href="@{/members}">Members</a>
+        <a th:href="@{/loans}">Loans</a>
+    </nav>
+</header>
+
+<main class="page-body narrow-body">
+    <section class="panel form-panel">
+        <p class="error-message" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+        <form th:action="@{/books}" th:object="${bookCreateRequest}" method="post" class="entity-form">
+            <label>
+                제목
+                <input type="text" th:field="*{title}" data-focus>
+                <span class="field-error" th:errors="*{title}"></span>
+            </label>
+            <label>
+                저자
+                <input type="text" th:field="*{author}">
+                <span class="field-error" th:errors="*{author}"></span>
+            </label>
+            <label>
+                ISBN
+                <input type="text" th:field="*{isbn}">
+                <span class="field-error" th:errors="*{isbn}"></span>
+            </label>
+            <label>
+                출판사
+                <input type="text" th:field="*{publisher}">
+                <span class="field-error" th:errors="*{publisher}"></span>
+            </label>
+            <label>
+                출판일
+                <input type="date" th:field="*{publishedDate}">
+                <span class="field-error" th:errors="*{publishedDate}"></span>
+            </label>
+            <label>
+                총 수량
+                <input type="number" min="1" th:field="*{totalQuantity}">
+                <span class="field-error" th:errors="*{totalQuantity}"></span>
+            </label>
+            <label>
+                상태
+                <select th:field="*{status}">
+                    <option th:each="status : ${bookStatuses}" th:value="${status}" th:text="${status}"></option>
+                </select>
+                <span class="field-error" th:errors="*{status}"></span>
+            </label>
+
+            <div class="form-actions">
+                <a class="button secondary-button" th:href="@{/books}">목록으로</a>
+                <button type="submit" class="button primary-button">등록</button>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

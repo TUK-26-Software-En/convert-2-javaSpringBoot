@@ -1,0 +1,7 @@
+org/tukorea/libcheckout/loan/model/LoanRegistration.class
+org/tukorea/libcheckout/member/model/MemberRegistration.class
+org/tukorea/libcheckout/book/model/BookSummary.class
+org/tukorea/libcheckout/member/model/MemberSummary.class
+org/tukorea/libcheckout/book/model/BookRegistration.class
+org/tukorea/libcheckout/global/model/HomeDashboardSummary.class
+org/tukorea/libcheckout/loan/model/LoanSummary.class

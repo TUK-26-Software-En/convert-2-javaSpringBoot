@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Management</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/loan.css}">
+    <script defer th:src="@{/js/main.js}"></script>
+    <script defer th:src="@{/js/loan.js}"></script>
+</head>
+<body data-page="loans">
+<header class="page-header compact-header">
+    <div>
+        <p class="eyebrow">Loan Management</p>
+        <h1>대출 관리</h1>
+    </div>
+    <nav class="main-nav">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/books}">Books</a>
+        <a th:href="@{/members}">Members</a>
+        <a th:href="@{/loans}">Loans</a>
+    </nav>
+</header>
+
+<main class="page-body">
+    <div class="toolbar">
+        <a class="button primary-button" th:href="@{/loans/new}">대출 등록</a>
+    </div>
+
+    <p class="flash-message" th:if="${message}" th:text="${message}"></p>
+
+    <section class="panel">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>도서</th>
+                <th>회원</th>
+                <th>대출일</th>
+                <th>반납 예정일</th>
+                <th>반납일</th>
+                <th>상태</th>
+                <th>동작</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(loans)}">
+                <td colspan="8">등록된 대출 정보가 없습니다.</td>
+            </tr>
+            <tr th:each="loan : ${loans}">
+                <td th:text="${loan.id}">1</td>
+                <td th:text="${loan.bookTitle}">도서</td>
+                <td th:text="${loan.memberName}">회원</td>
+                <td th:text="${#temporals.format(loan.loanedAt, 'yyyy-MM-dd HH:mm')}">2026-05-17 10:00</td>
+                <td th:text="${loan.dueDate}">2026-05-31</td>
+                <td th:text="${loan.returnedAt == null ? '-' : #temporals.format(loan.returnedAt, 'yyyy-MM-dd HH:mm')}">-</td>
+                <td><span class="status-badge" th:text="${loan.status}">ACTIVE</span></td>
+                <td>
+                    <form th:if="${loan.status.name() == 'ACTIVE'}" th:action="@{/loans/{loanId}/return(loanId=${loan.id})}" method="post">
+                        <button type="submit" class="button subtle-button">반납 처리</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

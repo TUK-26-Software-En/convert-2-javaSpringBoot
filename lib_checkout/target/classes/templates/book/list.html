@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/book.css}">
+    <script defer th:src="@{/js/main.js}"></script>
+    <script defer th:src="@{/js/book.js}"></script>
+</head>
+<body data-page="books">
+<header class="page-header compact-header">
+    <div>
+        <p class="eyebrow">Book Management</p>
+        <h1>도서 관리</h1>
+    </div>
+    <nav class="main-nav">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/books}">Books</a>
+        <a th:href="@{/members}">Members</a>
+        <a th:href="@{/loans}">Loans</a>
+    </nav>
+</header>
+
+<main class="page-body">
+    <div class="toolbar">
+        <a class="button primary-button" th:href="@{/books/new}">도서 등록</a>
+    </div>
+
+    <p class="flash-message" th:if="${message}" th:text="${message}"></p>
+
+    <section class="panel">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>제목</th>
+                <th>저자</th>
+                <th>ISBN</th>
+                <th>출판사</th>
+                <th>수량</th>
+                <th>대출 가능</th>
+                <th>상태</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(books)}">
+                <td colspan="8">등록된 도서가 없습니다.</td>
+            </tr>
+            <tr th:each="book : ${books}">
+                <td th:text="${book.id}">1</td>
+                <td th:text="${book.title}">제목</td>
+                <td th:text="${book.author}">저자</td>
+                <td th:text="${book.isbn}">ISBN</td>
+                <td th:text="${book.publisher}">출판사</td>
+                <td th:text="${book.totalQuantity}">1</td>
+                <td th:text="${book.availableQuantity}">1</td>
+                <td><span class="status-badge" th:text="${book.status}">AVAILABLE</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

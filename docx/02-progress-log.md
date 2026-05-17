@@ -38,8 +38,15 @@
 - `docker-compose.yml`을 실제 구성으로 채운다.
 - 모니터링 애플리케이션 `service_monitor/` 골격과 Compose 서비스 `service-monitor`를 만든다.
 
+### 현재 코드 기준 추가 진행 결과
+
+- `lib_checkout`는 `book`, `member`, `loan` 기능과 서버 렌더링 UI, Flyway 기반 스키마, `H2`/`PostgreSQL` 프로필 분리를 포함하는 구조로 재구성되었다.
+- 루트 `docker-compose.yml`은 `library-service`, `postgres`, `service-monitor` 3개 서비스를 기준으로 실제 실행 구성을 갖추도록 채워졌다.
+- `service_monitor/`는 별도 Spring Boot 애플리케이션으로 추가되었고 Dashboard, health summary API, incident 이력, reliability metrics 기본 골격을 포함한다.
+- Docker logs 수집과 Failure Injection 실제 제어 기능은 다음 구현 단계로 남겨둔다.
+
 ### 현재 상태 요약
 
 - 계획 수립 단계는 종료되었다.
-- 문서 기준선 작성이 Build의 첫 단계다.
-- 다음 단계는 실제 애플리케이션 구조 변경과 빌드 구성 작업이다.
+- 메인 서비스 현대화와 도메인 기본 기능 구축은 반영되었다.
+- 다음 단계는 Compose 통합 실행 검증과 모니터링/보안 기능의 후속 확장이다.

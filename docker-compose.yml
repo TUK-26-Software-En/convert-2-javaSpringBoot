@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: lib_checkout
+      POSTGRES_USER: lib_checkout
+      POSTGRES_PASSWORD: lib_checkout
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lib_checkout -d lib_checkout"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - library-net
+
+  library-service:
+    build:
+      context: ./lib_checkout
+    environment:
+      SPRING_PROFILES_ACTIVE: docker-pg
+      DB_URL: jdbc:postgresql://postgres:5432/lib_checkout
+      DB_USERNAME: lib_checkout
+      DB_PASSWORD: lib_checkout
+      SERVER_PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - library-net
+
+  service-monitor:
+    build:
+      context: ./service_monitor
+    environment:
+      SPRING_PROFILES_ACTIVE: monitor-docker
+      SERVER_PORT: 8081
+      LIBRARY_SERVICE_HEALTH_URL: http://library-service:8080/actuator/health
+      POSTGRES_JDBC_URL: jdbc:postgresql://postgres:5432/lib_checkout
+      POSTGRES_USERNAME: lib_checkout
+      POSTGRES_PASSWORD: lib_checkout
+      MONITOR_DB_PATH: /data/monitor-db/service-monitor
+      MONITORING_COLLECTION_FIXED_DELAY: 30000
+      DOCKER_CONTROL_ENABLED: true
+      FAULT_INJECTION_ENABLED: true
+      AIOPS_ENABLED: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      library-service:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    volumes:
+      - monitor-data:/data/monitor-db
+      - /var/run/docker.sock:/var/run/docker.sock
+    read_only: true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
+    cpus: 0.50
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8081/actuator/health > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - library-net
+
+networks:
+  library-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  monitor-data:

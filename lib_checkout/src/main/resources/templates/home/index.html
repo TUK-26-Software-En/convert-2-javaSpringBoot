@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Checkout Service</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <script defer th:src="@{/js/main.js}"></script>
+</head>
+<body data-page="home">
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Software Engineering Practice</p>
+        <h1>Library Checkout Service</h1>
+        <p class="subtitle">3-Layer Architecture와 MVC를 기준으로 구성하는 도서 대출 서비스</p>
+    </div>
+    <nav class="main-nav">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/books}">Books</a>
+        <a th:href="@{/members}">Members</a>
+        <a th:href="@{/loans}">Loans</a>
+    </nav>
+</header>
+
+<main class="content-grid">
+    <section class="panel summary-card">
+        <h2>도서 현황</h2>
+        <p class="metric" th:text="${summary.bookCount}">0</p>
+    </section>
+    <section class="panel summary-card">
+        <h2>회원 현황</h2>
+        <p class="metric" th:text="${summary.memberCount}">0</p>
+    </section>
+    <section class="panel summary-card">
+        <h2>대출 이력</h2>
+        <p class="metric" th:text="${summary.loanCount}">0</p>
+    </section>
+    <section class="panel summary-card accent-card">
+        <h2>활성 대출</h2>
+        <p class="metric" th:text="${summary.activeLoanCount}">0</p>
+    </section>
+    <section class="panel content-span">
+        <h2>현재 Build 단계</h2>
+        <p>메인 서비스는 Spring Boot 3.x, Java 21, H2/PostgreSQL 프로필 분리, 기능별 3-Layer 구조로 재구성되었다.</p>
+        <p>이제 Docker Compose와 별도 모니터링 컨테이너가 연결되며, 다음 단계는 Docker 제어 allowlist와 로그 수집 기능 고도화다.</p>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Monitor Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <script defer th:src="@{/js/dashboard.js}"></script>
+</head>
+<body>
+<header class="hero">
+    <div>
+        <p class="eyebrow">Monitoring Container</p>
+        <h1>Service Monitor Dashboard</h1>
+        <p class="subtitle">메인 서비스와 PostgreSQL의 health, incident, reliability metrics, Docker runtime, failure injection 상태를 한 화면에서 추적하는 운영 대시보드</p>
+    </div>
+    <div class="hero-actions">
+        <a class="hero-link" th:href="@{/api/health/summary}">Health API</a>
+        <a class="hero-link" th:href="@{/api/metrics/reliability}">Metrics API</a>
+        <a class="hero-link" th:href="@{/api/incidents}">Incidents API</a>
+        <a class="hero-link" th:href="@{/actuator/health}">Actuator</a>
+    </div>
+</header>
+
+<main class="dashboard-shell">
+    <section class="summary-grid">
+        <article class="summary-card">
+            <span class="summary-label">UP Services</span>
+            <strong th:text="${dashboard.upServiceCount}">0</strong>
+        </article>
+        <article class="summary-card danger-card">
+            <span class="summary-label">DOWN Services</span>
+            <strong th:text="${dashboard.downServiceCount}">0</strong>
+        </article>
+        <article class="summary-card">
+            <span class="summary-label">Active Incidents</span>
+            <strong th:text="${#lists.size(dashboard.activeIncidents)}">0</strong>
+        </article>
+        <article class="summary-card accent-card">
+            <span class="summary-label">Average Availability</span>
+            <strong th:text="${#numbers.formatDecimal(dashboard.averageAvailability * 100, 1, 2)} + '%'">0.00%</strong>
+        </article>
+        <article class="summary-card">
+            <span class="summary-label">Failure Injection</span>
+            <strong th:text="${dashboard.dockerControlEnabled and dashboard.failureInjectionEnabled ? 'ENABLED' : 'READ ONLY'}">READ ONLY</strong>
+        </article>
+    </section>
+
+    <section class="panel tabs-panel">
+        <nav class="tab-list" aria-label="Dashboard Tabs">
+            <a href="#tab-overview" class="tab-button is-active" data-tab-button="overview" role="tab">Overview</a>
+            <a href="#tab-main-service" class="tab-button" data-tab-button="main-service" role="tab">Main Service</a>
+            <a href="#tab-database" class="tab-button" data-tab-button="database" role="tab">Database</a>
+            <a href="#tab-logs" class="tab-button" data-tab-button="logs" role="tab">Logs</a>
+            <a href="#tab-metrics" class="tab-button" data-tab-button="metrics" role="tab">Reliability Metrics</a>
+            <a href="#tab-failure-injection" class="tab-button" data-tab-button="failure-injection" role="tab">Failure Injection</a>
+        </nav>
+
+        <section id="tab-overview" class="tab-panel is-active" data-tab-panel="overview">
+            <div class="split-grid">
+                <article class="subpanel">
+                    <h2>Current Health</h2>
+                    <div class="status-grid">
+                        <article class="status-card" th:with="detail=${dashboard.libraryServiceDetail}">
+                            <div class="status-head">
+                                <h3 th:text="${detail.target.displayName}">Library Service</h3>
+                                <span class="status-pill"
+                                      th:classappend="${detail.currentStatus.status.name() == 'UP'} ? ' is-up' : ' is-down'"
+                                      th:text="${detail.currentStatus.status}">UP</span>
+                            </div>
+                            <p class="status-detail" th:text="${detail.currentStatus.detail}">detail</p>
+                            <p class="status-time" th:text="${detail.currentStatus.checkedAt}">time</p>
+                            <div class="detail-grid-info">
+                                <div class="detail-item">
+                                    <span>Probe</span>
+                                    <strong th:text="${detail.probeTarget}">probe</strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Container</span>
+                                    <strong th:text="${detail.containerDetails.containerName}">container</strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Runtime State</span>
+                                    <strong th:text="${detail.containerDetails.state}">running</strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Health Check</span>
+                                    <strong th:text="${detail.containerDetails.healthStatus}">healthy</strong>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="status-card" th:with="detail=${dashboard.postgresDetail}">
+                            <div class="status-head">
+                                <h3 th:text="${detail.target.displayName}">PostgreSQL</h3>
+                                <span class="status-pill"
+                                      th:classappend="${detail.currentStatus.status.name() == 'UP'} ? ' is-up' : ' is-down'"
+                                      th:text="${detail.currentStatus.status}">UP</span>
+                            </div>
+                            <p class="status-detail" th:text="${detail.currentStatus.detail}">detail</p>
+                            <p class="status-time" th:text="${detail.currentStatus.checkedAt}">time</p>
+                            <div class="detail-grid-info">
+                                <div class="detail-item">
+                                    <span>Probe</span>
+                                    <strong th:text="${detail.probeTarget}">probe</strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Container</span>
+                                    <strong th:text="${detail.containerDetails.containerName}">container</strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Runtime State</span>
+                                    <strong th:text="${detail.containerDetails.state}">running</strong>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Health Check</span>
+                                    <strong th:text="${detail.containerDetails.healthStatus}">healthy</strong>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </article>
+
+                <article class="subpanel">
+                    <h2>Active Incidents</h2>
+                    <p class="empty-state" th:if="${#lists.isEmpty(dashboard.activeIncidents)}">현재 활성 장애가 없습니다.</p>
+                    <table class="data-table" th:unless="${#lists.isEmpty(dashboard.activeIncidents)}">
+                        <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>Started</th>
+                            <th>Duration</th>
+                            <th>Reason</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="incident : ${dashboard.activeIncidents}">
+                            <td th:text="${incident.target.displayName}">Service</td>
+                            <td th:text="${incident.startedAt}">time</td>
+                            <td th:text="${incident.durationMinutes} + ' min'">0 min</td>
+                            <td th:text="${incident.startDetail}">detail</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </article>
+            </div>
+        </section>
+
+        <section id="tab-main-service" class="tab-panel" data-tab-panel="main-service" th:with="detail=${dashboard.libraryServiceDetail}">
+            <div class="detail-panel-grid">
+                <article class="subpanel">
+                    <h2>Library Service Runtime</h2>
+                    <div class="status-inline">
+                        <span class="status-pill"
+                              th:classappend="${detail.currentStatus.status.name() == 'UP'} ? ' is-up' : ' is-down'"
+                              th:text="${detail.currentStatus.status}">UP</span>
+                        <strong th:text="${detail.currentStatus.detail}">detail</strong>
+                    </div>
+                    <p class="status-time" th:text="${detail.currentStatus.checkedAt}">time</p>
+                    <div class="detail-grid-info">
+                        <div class="detail-item">
+                            <span>Probe Target</span>
+                            <strong th:text="${detail.probeTarget}">probe</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Container</span>
+                            <strong th:text="${detail.containerDetails.containerName}">container</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Image</span>
+                            <strong th:text="${detail.containerDetails.image}">image</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>State</span>
+                            <strong th:text="${detail.containerDetails.state}">running</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Health</span>
+                            <strong th:text="${detail.containerDetails.healthStatus}">healthy</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Started At</span>
+                            <strong th:text="${detail.containerDetails.startedAt}">started</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Restarts</span>
+                            <strong th:text="${detail.containerDetails.restartCount}">0</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Ports</span>
+                            <strong th:text="${detail.containerDetails.ports}">ports</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>CPU</span>
+                            <strong th:text="${detail.containerDetails.cpuUsage}">0.00%</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Memory</span>
+                            <strong th:text="${detail.containerDetails.memoryUsage + ' / ' + detail.containerDetails.memoryLimit}">0 MiB</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Network I/O</span>
+                            <strong th:text="${detail.containerDetails.networkIo}">io</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>PIDs</span>
+                            <strong th:text="${detail.containerDetails.processCount}">0</strong>
+                        </div>
+                    </div>
+                    <p class="panel-note" th:text="${detail.containerDetails.message}">runtime message</p>
+                </article>
+
+                <article class="subpanel">
+                    <h2>Recent Main Service Incidents</h2>
+                    <p class="empty-state" th:if="${#lists.isEmpty(detail.recentIncidents)}">저장된 incident 이력이 없습니다.</p>
+                    <table class="data-table" th:unless="${#lists.isEmpty(detail.recentIncidents)}">
+                        <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Started</th>
+                            <th>Resolved</th>
+                            <th>Duration</th>
+                            <th>Start Detail</th>
+                            <th>Resolution</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="incident : ${detail.recentIncidents}">
+                            <td th:text="${incident.status}">ACTIVE</td>
+                            <td th:text="${incident.startedAt}">time</td>
+                            <td th:text="${incident.resolvedAt == null ? '-' : incident.resolvedAt}">-</td>
+                            <td th:text="${incident.durationMinutes} + ' min'">0 min</td>
+                            <td th:text="${incident.startDetail}">reason</td>
+                            <td th:text="${incident.resolutionDetail == null ? '-' : incident.resolutionDetail}">resolution</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </article>
+
+                <article class="subpanel">
+                    <h2>Recent Health Transitions</h2>
+                    <p class="empty-state" th:if="${#lists.isEmpty(detail.recentEvents)}">저장된 health transition 이력이 없습니다.</p>
+                    <table class="data-table" th:unless="${#lists.isEmpty(detail.recentEvents)}">
+                        <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Checked At</th>
+                            <th>Detail</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="event : ${detail.recentEvents}">
+                            <td th:text="${event.status}">UP</td>
+                            <td th:text="${event.checkedAt}">time</td>
+                            <td th:text="${event.detail}">detail</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </article>
+            </div>
+
+            <article class="subpanel">
+                <h2>Recent Docker Logs</h2>
+                <p class="empty-state" th:if="${#lists.isEmpty(detail.containerDetails.recentLogs)}">최근 Docker 로그가 없습니다.</p>
+                <div class="log-view" th:unless="${#lists.isEmpty(detail.containerDetails.recentLogs)}">
+                    <p class="log-line" th:each="line : ${detail.containerDetails.recentLogs}" th:text="${line}">log line</p>
+                </div>
+            </article>
+        </section>
+
+        <section id="tab-database" class="tab-panel" data-tab-panel="database" th:with="detail=${dashboard.postgresDetail}">
+            <div class="detail-panel-grid">
+                <article class="subpanel">
+                    <h2>PostgreSQL Runtime</h2>
+                    <div class="status-inline">
+                        <span class="status-pill"
+                              th:classappend="${detail.currentStatus.status.name() == 'UP'} ? ' is-up' : ' is-down'"
+                              th:text="${detail.currentStatus.status}">UP</span>
+                        <strong th:text="${detail.currentStatus.detail}">detail</strong>
+                    </div>
+                    <p class="status-time" th:text="${detail.currentStatus.checkedAt}">time</p>
+                    <div class="detail-grid-info">
+                        <div class="detail-item">
+                            <span>Probe Target</span>
+                            <strong th:text="${detail.probeTarget}">probe</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Container</span>
+                            <strong th:text="${detail.containerDetails.containerName}">container</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Image</span>
+                            <strong th:text="${detail.containerDetails.image}">image</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>State</span>
+                            <strong th:text="${detail.containerDetails.state}">running</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Health</span>
+                            <strong th:text="${detail.containerDetails.healthStatus}">healthy</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Started At</span>
+                            <strong th:text="${detail.containerDetails.startedAt}">started</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Restarts</span>
+                            <strong th:text="${detail.containerDetails.restartCount}">0</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Ports</span>
+                            <strong th:text="${detail.containerDetails.ports}">ports</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>CPU</span>
+                            <strong th:text="${detail.containerDetails.cpuUsage}">0.00%</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Memory</span>
+                            <strong th:text="${detail.containerDetails.memoryUsage + ' / ' + detail.containerDetails.memoryLimit}">0 MiB</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Network I/O</span>
+                            <strong th:text="${detail.containerDetails.networkIo}">io</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>PIDs</span>
+                            <strong th:text="${detail.containerDetails.processCount}">0</strong>
+                        </div>
+                    </div>
+                    <p class="panel-note" th:text="${detail.containerDetails.message}">runtime message</p>
+                </article>
+
+                <article class="subpanel">
+                    <h2>Recent Database Incidents</h2>
+                    <p class="empty-state" th:if="${#lists.isEmpty(detail.recentIncidents)}">저장된 incident 이력이 없습니다.</p>
+                    <table class="data-table" th:unless="${#lists.isEmpty(detail.recentIncidents)}">
+                        <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Started</th>
+                            <th>Resolved</th>
+                            <th>Duration</th>
+                            <th>Start Detail</th>
+                            <th>Resolution</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="incident : ${detail.recentIncidents}">
+                            <td th:text="${incident.status}">ACTIVE</td>
+                            <td th:text="${incident.startedAt}">time</td>
+                            <td th:text="${incident.resolvedAt == null ? '-' : incident.resolvedAt}">-</td>
+                            <td th:text="${incident.durationMinutes} + ' min'">0 min</td>
+                            <td th:text="${incident.startDetail}">reason</td>
+                            <td th:text="${incident.resolutionDetail == null ? '-' : incident.resolutionDetail}">resolution</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </article>
+
+                <article class="subpanel">
+                    <h2>Recent Health Transitions</h2>
+                    <p class="empty-state" th:if="${#lists.isEmpty(detail.recentEvents)}">저장된 health transition 이력이 없습니다.</p>
+                    <table class="data-table" th:unless="${#lists.isEmpty(detail.recentEvents)}">
+                        <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Checked At</th>
+                            <th>Detail</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="event : ${detail.recentEvents}">
+                            <td th:text="${event.status}">UP</td>
+                            <td th:text="${event.checkedAt}">time</td>
+                            <td th:text="${event.detail}">detail</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </article>
+            </div>
+
+            <article class="subpanel">
+                <h2>Recent Docker Logs</h2>
+                <p class="empty-state" th:if="${#lists.isEmpty(detail.containerDetails.recentLogs)}">최근 Docker 로그가 없습니다.</p>
+                <div class="log-view" th:unless="${#lists.isEmpty(detail.containerDetails.recentLogs)}">
+                    <p class="log-line" th:each="line : ${detail.containerDetails.recentLogs}" th:text="${line}">log line</p>
+                </div>
+            </article>
+        </section>
+
+        <section id="tab-logs" class="tab-panel" data-tab-panel="logs">
+            <div class="detail-panel-grid two-column-grid">
+                <article class="subpanel" th:with="detail=${dashboard.libraryServiceDetail}">
+                    <h2>Library Service Logs</h2>
+                    <p class="panel-note">Container <span th:text="${detail.containerDetails.containerName}">container</span> 기준 최근 로그</p>
+                    <p class="empty-state" th:if="${#lists.isEmpty(detail.containerDetails.recentLogs)}">최근 Docker 로그가 없습니다.</p>
+                    <div class="log-view" th:unless="${#lists.isEmpty(detail.containerDetails.recentLogs)}">
+                        <p class="log-line" th:each="line : ${detail.containerDetails.recentLogs}" th:text="${line}">log line</p>
+                    </div>
+                </article>
+
+                <article class="subpanel" th:with="detail=${dashboard.postgresDetail}">
+                    <h2>PostgreSQL Logs</h2>
+                    <p class="panel-note">Container <span th:text="${detail.containerDetails.containerName}">container</span> 기준 최근 로그</p>
+                    <p class="empty-state" th:if="${#lists.isEmpty(detail.containerDetails.recentLogs)}">최근 Docker 로그가 없습니다.</p>
+                    <div class="log-view" th:unless="${#lists.isEmpty(detail.containerDetails.recentLogs)}">
+                        <p class="log-line" th:each="line : ${detail.containerDetails.recentLogs}" th:text="${line}">log line</p>
+                    </div>
+                </article>
+            </div>
+
+            <article class="subpanel">
+                <h2>Recent Monitoring Events</h2>
+                <p class="empty-state" th:if="${#lists.isEmpty(dashboard.recentEvents)}">아직 저장된 이벤트가 없습니다.</p>
+                <table class="data-table" th:unless="${#lists.isEmpty(dashboard.recentEvents)}">
+                    <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>Status</th>
+                        <th>Checked At</th>
+                        <th>Detail</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="event : ${dashboard.recentEvents}">
+                        <td th:text="${event.target.displayName}">Service</td>
+                        <td th:text="${event.status}">UP</td>
+                        <td th:text="${event.checkedAt}">time</td>
+                        <td th:text="${event.detail}">detail</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </article>
+        </section>
+
+        <section id="tab-metrics" class="tab-panel" data-tab-panel="metrics">
+            <div class="metric-grid">
+                <article class="metric-card" th:with="detail=${dashboard.libraryServiceDetail}">
+                    <h2 th:text="${detail.target.displayName}">Library Service</h2>
+                    <div class="detail-grid-info compact-grid">
+                        <div class="detail-item">
+                            <span>MTBF</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.mtbfMinutes, 1, 2)} + ' min'">0.00 min</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>MTTR</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.mttrMinutes, 1, 2)} + ' min'">0.00 min</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>MTTF</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.mttfMinutes, 1, 2)} + ' min'">0.00 min</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Availability</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.availabilityRate * 100, 1, 2)} + '%'">0.00%</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Total Incidents</span>
+                            <strong th:text="${detail.reliabilityMetrics.incidentCount}">0</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Active Incidents</span>
+                            <strong th:text="${detail.reliabilityMetrics.activeIncidentCount}">0</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="metric-card" th:with="detail=${dashboard.postgresDetail}">
+                    <h2 th:text="${detail.target.displayName}">PostgreSQL</h2>
+                    <div class="detail-grid-info compact-grid">
+                        <div class="detail-item">
+                            <span>MTBF</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.mtbfMinutes, 1, 2)} + ' min'">0.00 min</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>MTTR</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.mttrMinutes, 1, 2)} + ' min'">0.00 min</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>MTTF</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.mttfMinutes, 1, 2)} + ' min'">0.00 min</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Availability</span>
+                            <strong th:text="${#numbers.formatDecimal(detail.reliabilityMetrics.availabilityRate * 100, 1, 2)} + '%'">0.00%</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Total Incidents</span>
+                            <strong th:text="${detail.reliabilityMetrics.incidentCount}">0</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Active Incidents</span>
+                            <strong th:text="${detail.reliabilityMetrics.activeIncidentCount}">0</strong>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <article class="subpanel">
+                <h2>Reliability Metrics Table</h2>
+                <p class="empty-state" th:if="${#lists.isEmpty(dashboard.reliabilityMetrics)}">계산 가능한 metric 데이터가 없습니다.</p>
+                <table class="data-table" th:unless="${#lists.isEmpty(dashboard.reliabilityMetrics)}">
+                    <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>MTBF</th>
+                        <th>MTTR</th>
+                        <th>MTTF</th>
+                        <th>Availability</th>
+                        <th>Incidents</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="metric : ${dashboard.reliabilityMetrics}">
+                        <td th:text="${metric.target.displayName}">Service</td>
+                        <td th:text="${#numbers.formatDecimal(metric.mtbfMinutes, 1, 2)} + ' min'">0.00 min</td>
+                        <td th:text="${#numbers.formatDecimal(metric.mttrMinutes, 1, 2)} + ' min'">0.00 min</td>
+                        <td th:text="${#numbers.formatDecimal(metric.mttfMinutes, 1, 2)} + ' min'">0.00 min</td>
+                        <td th:text="${#numbers.formatDecimal(metric.availabilityRate * 100, 1, 2)} + '%'">0.00%</td>
+                        <td th:text="${metric.incidentCount + ' total / ' + metric.activeIncidentCount + ' active'}">0 total</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </article>
+        </section>
+
+        <section id="tab-failure-injection" class="tab-panel" data-tab-panel="failure-injection">
+            <div class="callout"
+                 th:if="${controlResult != null}"
+                 th:classappend="${controlResult.success} ? ' is-success' : ' is-error'">
+                <strong th:text="${controlResult.success ? 'Failure Injection Completed' : 'Failure Injection Failed'}">Failure Injection Completed</strong>
+                <p th:text="${controlResult.command.commandText() + ' -> ' + controlResult.target.composeServiceName}">message</p>
+                <p th:text="${controlResult.message}">detail</p>
+                <p class="status-time" th:text="${controlResult.executedAt}">time</p>
+            </div>
+
+            <article class="subpanel">
+                <h2>Failure Injection Status</h2>
+                <div class="detail-grid-info compact-grid">
+                    <div class="detail-item">
+                        <span>Docker Control</span>
+                        <strong th:text="${dashboard.dockerControlEnabled ? 'enabled' : 'disabled'}">enabled</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Fault Injection</span>
+                        <strong th:text="${dashboard.failureInjectionEnabled ? 'enabled' : 'disabled'}">enabled</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Socket Path</span>
+                        <strong th:text="${dashboard.dockerSocketPath}">/var/run/docker.sock</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Allowed Targets</span>
+                        <strong th:text="${#strings.listJoin(dashboard.allowedTargets, ', ')}">library-service, postgres</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Allowed Commands</span>
+                        <strong th:text="${#strings.listJoin(dashboard.allowedCommands, ', ')}">pause, unpause</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Action Buttons</span>
+                        <strong th:text="${#strings.listJoin(dashboard.failureInjectionCommands, ', ')}">pause, unpause, restart</strong>
+                    </div>
+                </div>
+                <p class="panel-note">Docker control은 allowlist 대상만 허용하며, 현재 대시보드는 실제 컨테이너 제어 전후 상태를 함께 표시한다.</p>
+            </article>
+
+            <div class="command-grid">
+                <article class="command-card" th:with="detail=${dashboard.libraryServiceDetail}">
+                    <h2 th:text="${detail.target.displayName} + ' Actions'">Library Service Actions</h2>
+                    <p class="panel-note" th:text="${'Current state=' + detail.containerDetails.state + ', health=' + detail.containerDetails.healthStatus}">state</p>
+                    <form class="command-form" method="post" th:action="@{/failure-injection}">
+                        <input type="hidden" name="target" th:value="${detail.target.name()}">
+                        <label class="command-label">
+                            <span>Reason</span>
+                            <input class="command-input" type="text" name="reason" maxlength="180" placeholder="verification / incident rehearsal / recovery test">
+                        </label>
+                        <div class="command-buttons">
+                            <button class="command-button" type="submit" name="command" value="PAUSE" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Pause</button>
+                            <button class="command-button" type="submit" name="command" value="UNPAUSE" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Unpause</button>
+                            <button class="command-button" type="submit" name="command" value="RESTART" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Restart</button>
+                            <button class="command-button" type="submit" name="command" value="STOP" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Stop</button>
+                            <button class="command-button" type="submit" name="command" value="START" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Start</button>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="command-card" th:with="detail=${dashboard.postgresDetail}">
+                    <h2 th:text="${detail.target.displayName} + ' Actions'">PostgreSQL Actions</h2>
+                    <p class="panel-note" th:text="${'Current state=' + detail.containerDetails.state + ', health=' + detail.containerDetails.healthStatus}">state</p>
+                    <form class="command-form" method="post" th:action="@{/failure-injection}">
+                        <input type="hidden" name="target" th:value="${detail.target.name()}">
+                        <label class="command-label">
+                            <span>Reason</span>
+                            <input class="command-input" type="text" name="reason" maxlength="180" placeholder="verification / incident rehearsal / recovery test">
+                        </label>
+                        <div class="command-buttons">
+                            <button class="command-button" type="submit" name="command" value="PAUSE" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Pause</button>
+                            <button class="command-button" type="submit" name="command" value="UNPAUSE" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Unpause</button>
+                            <button class="command-button" type="submit" name="command" value="RESTART" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Restart</button>
+                            <button class="command-button" type="submit" name="command" value="STOP" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Stop</button>
+                            <button class="command-button" type="submit" name="command" value="START" th:disabled="${!dashboard.dockerControlEnabled or !dashboard.failureInjectionEnabled}">Start</button>
+                        </div>
+                    </form>
+                </article>
+            </div>
+
+            <article class="subpanel">
+                <h2>Control Policy</h2>
+                <div class="policy-grid">
+                    <div>
+                        <h3>Allowed Targets</h3>
+                        <ul>
+                            <li th:each="target : ${dashboard.allowedTargets}" th:text="${target}">library-service</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Allowed Commands</h3>
+                        <ul>
+                            <li th:each="command : ${dashboard.allowedCommands}" th:text="${command}">pause</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Usage Rules</h3>
+                        <ul>
+                            <li>장애 주입 전 정상 상태를 기록한다.</li>
+                            <li>장애 주입 후 health transition과 incident 기록을 확인한다.</li>
+                            <li>allowlist 밖 대상 제어와 파괴적 데이터 삭제는 금지한다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </section>
+</main>
+</body>
+</html>
