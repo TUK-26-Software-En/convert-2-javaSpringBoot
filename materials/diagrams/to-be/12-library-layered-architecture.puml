@@ -1,0 +1,42 @@
+@startuml
+title To-Be Layered Architecture - library-service
+
+skinparam rectangle {
+  RoundCorner 12
+}
+
+rectangle "View / Browser\nThymeleaf + JS assist" as View
+rectangle "Presentation Layer\nControllers + DTOs" as Presentation
+rectangle "Business Layer\nServices + Policies" as Business
+rectangle "Data Access Layer\nRepositories + Entities" as DataAccess
+database "PostgreSQL" as DB
+
+View --> Presentation
+Presentation --> Business
+Business --> DataAccess
+DataAccess --> DB
+
+package "Feature Modules" {
+  rectangle book
+  rectangle member
+  rectangle loan
+}
+
+Presentation --> book
+Presentation --> member
+Presentation --> loan
+Business --> book
+Business --> member
+Business --> loan
+DataAccess --> book
+DataAccess --> member
+DataAccess --> loan
+
+note bottom
+Documented principle:
+Controllers stay thin.
+Services own rules and transaction boundaries.
+Data access hides persistence details.
+end note
+
+@enduml

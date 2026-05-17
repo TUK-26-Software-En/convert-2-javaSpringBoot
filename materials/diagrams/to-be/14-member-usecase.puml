@@ -1,0 +1,23 @@
+@startuml
+title To-Be Use Cases - Member Management
+
+left to right direction
+actor Librarian
+
+usecase "List Members" as UC1
+usecase "View Member Detail" as UC2
+usecase "Register Member" as UC3
+usecase "Update Member" as UC4
+usecase "Activate / Deactivate Member" as UC5
+usecase "View Member Loan Statistics" as UC6
+
+Librarian --> UC1
+Librarian --> UC2
+Librarian --> UC3
+Librarian --> UC4
+Librarian --> UC5
+Librarian --> UC6
+
+UC2 ..> UC6 : <<extend>>
+
+@enduml

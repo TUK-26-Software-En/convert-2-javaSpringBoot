@@ -1,0 +1,27 @@
+@startuml
+title To-Be Target Context - library-service Centric
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor Librarian
+actor Admin
+rectangle Browser
+node "library-service" as Library
+database PostgreSQL
+node "service-monitor" as Monitor
+
+Librarian --> Browser : manage books / members / loans
+Admin --> Browser : view monitoring and operations
+Browser --> Library : business pages and forms
+Library --> PostgreSQL : persistent storage
+Monitor --> Library : health / runtime observation
+
+note right of Library
+Target scope from docx:
+- Feature-first + 3-layer + MVC
+- Book / Member / Loan full lifecycle
+- server-rendered views
+end note
+
+@enduml

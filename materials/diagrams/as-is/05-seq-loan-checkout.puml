@@ -1,0 +1,31 @@
+@startuml
+title As-Is Sequence - Loan Checkout
+
+actor User
+participant Browser
+participant LoanController
+participant LoanService
+participant BookRepository
+participant MemberRepository
+participant LoanRepository
+database PostgreSQL
+
+User -> Browser : submit POST /loans
+Browser -> LoanController : LoanCreateRequest
+LoanController -> LoanController : validate request
+
+alt validation error
+  LoanController --> Browser : loan/form
+else valid request
+  LoanController -> LoanService : createLoan(registration)
+  LoanService -> BookRepository : findById(bookId)
+  LoanService -> MemberRepository : findById(memberId)
+  LoanService -> LoanService : verify member is ACTIVE
+  LoanService -> LoanService : book.lendOne()
+  LoanService -> LoanRepository : save(LoanEntity)
+  LoanRepository -> PostgreSQL : insert into loans
+  LoanService --> LoanController : success
+  LoanController --> Browser : redirect /loans
+end
+
+@enduml

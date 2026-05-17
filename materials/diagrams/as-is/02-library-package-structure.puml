@@ -1,0 +1,79 @@
+@startuml
+title As-Is Package Structure - library-service
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "global" {
+  class HomeController
+  class HomeDashboardService
+  class DockerDemoDataSqlInitializer
+}
+
+package "book.presentation.controller" {
+  class BookController
+}
+package "book.business.service" {
+  class BookService
+}
+package "book.dataaccess.repository" {
+  interface BookRepository
+}
+package "book.dataaccess.entity" {
+  class BookEntity
+}
+
+package "member.presentation.controller" {
+  class MemberController
+}
+package "member.business.service" {
+  class MemberService
+}
+package "member.dataaccess.repository" {
+  interface MemberRepository
+}
+package "member.dataaccess.entity" {
+  class MemberEntity
+}
+
+package "loan.presentation.controller" {
+  class LoanController
+}
+package "loan.business.service" {
+  class LoanService
+}
+package "loan.dataaccess.repository" {
+  interface LoanRepository
+}
+package "loan.dataaccess.entity" {
+  class LoanEntity
+}
+
+HomeController --> HomeDashboardService
+HomeDashboardService --> BookRepository
+HomeDashboardService --> MemberRepository
+HomeDashboardService --> LoanRepository
+
+BookController --> BookService
+BookService --> BookRepository
+BookRepository --> BookEntity
+
+MemberController --> MemberService
+MemberService --> MemberRepository
+MemberRepository --> MemberEntity
+MemberService --> LoanRepository : member dashboard aggregation
+
+LoanController --> LoanService
+LoanController --> BookService : form data
+LoanController --> MemberService : form data
+LoanService --> LoanRepository
+LoanService --> BookRepository
+LoanService --> MemberRepository
+LoanRepository --> LoanEntity
+
+note bottom
+Feature-first + MVC + 3-Layer is implemented.
+Controllers are thin and orchestration stays in services.
+end note
+
+@enduml

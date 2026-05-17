@@ -1,0 +1,32 @@
+@startuml
+title As-Is Sequence - Book Registration
+
+actor User
+participant Browser
+participant BookController
+participant BookService
+participant BookRepository
+database PostgreSQL
+
+User -> Browser : submit POST /books
+Browser -> BookController : BookCreateRequest
+BookController -> BookController : validate request
+
+alt validation error
+  BookController --> Browser : book/form
+else valid request
+  BookController -> BookService : createBook(registration)
+  BookService -> BookRepository : existsByIsbn(isbn)
+
+  alt duplicate ISBN
+    BookService --> BookController : IllegalArgumentException
+    BookController --> Browser : book/form + errorMessage
+  else unique ISBN
+    BookService -> BookRepository : save(BookEntity)
+    BookRepository -> PostgreSQL : insert into books
+    BookService --> BookController : success
+    BookController --> Browser : redirect /books
+  end
+end
+
+@enduml

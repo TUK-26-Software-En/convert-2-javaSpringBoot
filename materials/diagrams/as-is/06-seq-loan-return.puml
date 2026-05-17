@@ -1,0 +1,22 @@
+@startuml
+title As-Is Sequence - Loan Return
+
+actor User
+participant Browser
+participant LoanController
+participant LoanService
+participant LoanRepository
+database PostgreSQL
+
+User -> Browser : submit POST /loans/{loanId}/return
+Browser -> LoanController : loanId
+LoanController -> LoanService : returnLoan(loanId)
+LoanService -> LoanRepository : findById(loanId)
+LoanService -> LoanService : loan.returnLoan(now)
+LoanService -> LoanService : loan.book.returnOne()
+LoanRepository -> PostgreSQL : update loans
+LoanRepository -> PostgreSQL : update books
+LoanService --> LoanController : success
+LoanController --> Browser : redirect /loans
+
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+title To-Be Use Cases - Loan Management
+
+left to right direction
+actor Librarian
+
+usecase "List Loans" as UC1
+usecase "View Loan Detail" as UC2
+usecase "Create Loan" as UC3
+usecase "Return Loan" as UC4
+usecase "View Overdue Loans" as UC5
+
+Librarian --> UC1
+Librarian --> UC2
+Librarian --> UC3
+Librarian --> UC4
+Librarian --> UC5
+
+UC5 ..> UC1 : <<extend>>
+
+@enduml

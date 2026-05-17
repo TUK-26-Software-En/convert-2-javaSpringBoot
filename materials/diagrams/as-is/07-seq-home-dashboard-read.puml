@@ -1,0 +1,26 @@
+@startuml
+title As-Is Sequence - Home Dashboard Read
+
+actor User
+participant Browser
+participant HomeController
+participant HomeDashboardService
+participant BookRepository
+participant MemberRepository
+participant LoanRepository
+database PostgreSQL
+
+User -> Browser : GET /
+Browser -> HomeController : request
+HomeController -> HomeDashboardService : loadSummary()
+HomeDashboardService -> BookRepository : findAllByOrderByIdDesc()
+BookRepository -> PostgreSQL : select books
+HomeDashboardService -> MemberRepository : findAllByOrderByIdDesc()
+MemberRepository -> PostgreSQL : select members
+HomeDashboardService -> LoanRepository : findAllWithBookAndMemberOrderByLoanedAtDesc()
+LoanRepository -> PostgreSQL : select loans join books join members
+HomeDashboardService -> HomeDashboardService : aggregate counts, overdue, member stats
+HomeDashboardService --> HomeController : HomeDashboardSummary
+HomeController --> Browser : render home/index
+
+@enduml

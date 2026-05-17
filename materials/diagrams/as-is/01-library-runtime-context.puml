@@ -1,0 +1,35 @@
+@startuml
+title As-Is Runtime Context - library-service
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor User
+rectangle Browser
+node "library-service\nSpring Boot MVC" as Library
+database "PostgreSQL\nlib_checkout" as Postgres
+collections "Thymeleaf Templates\nhome/book/member/loan" as Templates
+collections "Static Resources\ncss/js" as Static
+artifact "db/seed/demo-data-postgres.sql" as Seed
+
+User --> Browser : open pages / submit forms
+Browser --> Library : HTTP 8080
+Library --> Templates : render views
+Library --> Static : serve assets
+Library --> Postgres : JPA / JDBC / Flyway
+Library ..> Seed : execute once if\nbooks, members, loans are empty\n(docker-pg only)
+
+note right of Library
+Profiles:
+- local-h2
+- test
+- docker-pg
+
+Current UI:
+- Home dashboard
+- Books
+- Members dashboard
+- Loans
+end note
+
+@enduml

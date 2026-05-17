@@ -1,0 +1,40 @@
+@startuml
+title Scope Gap Map - library-service
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "As-Is (Implemented)" {
+  [Home dashboard]
+  [Book list]
+  [Book registration]
+  [Member list]
+  [Member registration]
+  [Members dashboard]
+  [Loan list]
+  [Loan checkout]
+  [Loan return]
+  [PostgreSQL dummy SQL seed]
+}
+
+package "To-Be (Documented Target)" {
+  [Book detail]
+  [Book update]
+  [Book status change]
+  [Member detail]
+  [Member update]
+  [Member status change]
+  [Loan detail]
+  [Dedicated overdue view]
+}
+
+[Book list] --> [Book detail]
+[Book registration] --> [Book update]
+[Book registration] --> [Book status change]
+[Member list] --> [Member detail]
+[Member registration] --> [Member update]
+[Member registration] --> [Member status change]
+[Loan list] --> [Loan detail]
+[Members dashboard] --> [Dedicated overdue view]
+
+@enduml

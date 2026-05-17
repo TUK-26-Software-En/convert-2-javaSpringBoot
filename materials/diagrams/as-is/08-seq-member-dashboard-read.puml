@@ -1,0 +1,23 @@
+@startuml
+title As-Is Sequence - Members Dashboard Read
+
+actor User
+participant Browser
+participant MemberController
+participant MemberService
+participant MemberRepository
+participant LoanRepository
+database PostgreSQL
+
+User -> Browser : GET /members
+Browser -> MemberController : request
+MemberController -> MemberService : loadDashboard()
+MemberService -> MemberRepository : findAllByOrderByIdDesc()
+MemberRepository -> PostgreSQL : select members
+MemberService -> LoanRepository : findAllWithBookAndMemberOrderByLoanedAtDesc()
+LoanRepository -> PostgreSQL : select loans join books join members
+MemberService -> MemberService : aggregate member loan statistics
+MemberService --> MemberController : MemberDashboardView
+MemberController --> Browser : render member/list
+
+@enduml

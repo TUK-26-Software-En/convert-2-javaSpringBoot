@@ -1,0 +1,24 @@
+@startuml
+title To-Be Use Cases - Book Management
+
+left to right direction
+actor Librarian
+
+usecase "List Books" as UC1
+usecase "View Book Detail" as UC2
+usecase "Register Book" as UC3
+usecase "Update Book" as UC4
+usecase "Change Book Status" as UC5
+usecase "Manage Inventory" as UC6
+
+Librarian --> UC1
+Librarian --> UC2
+Librarian --> UC3
+Librarian --> UC4
+Librarian --> UC5
+Librarian --> UC6
+
+UC4 ..> UC6 : <<include>>
+UC5 ..> UC6 : <<include>>
+
+@enduml

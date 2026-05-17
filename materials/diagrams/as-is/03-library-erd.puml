@@ -1,0 +1,53 @@
+@startuml
+title As-Is ERD - library-service
+
+hide methods
+hide stereotypes
+
+entity books {
+  * id : bigint
+  --
+  title : varchar(255)
+  author : varchar(255)
+  isbn : varchar(32) <<unique>>
+  publisher : varchar(255)
+  published_date : date
+  total_quantity : integer
+  available_quantity : integer
+  status : varchar(32)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity members {
+  * id : bigint
+  --
+  name : varchar(255)
+  email : varchar(255) <<unique>>
+  phone_number : varchar(64)
+  status : varchar(32)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity loans {
+  * id : bigint
+  --
+  book_id : bigint <<FK>>
+  member_id : bigint <<FK>>
+  loaned_at : timestamp
+  due_date : date
+  returned_at : timestamp
+  status : varchar(32)
+}
+
+books ||--o{ loans : book_id
+members ||--o{ loans : member_id
+
+note right of books
+available_quantity is mutated by
+loan/return business rules and recalculated
+by the PostgreSQL dummy data seed.
+end note
+
+@enduml
